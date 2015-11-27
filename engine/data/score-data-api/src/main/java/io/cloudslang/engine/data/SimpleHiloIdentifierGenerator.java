@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.id.IdentifierGenerator;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -97,7 +98,7 @@ public class SimpleHiloIdentifierGenerator implements IdentifierGenerator, Ident
             JdbcTemplate jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true));
 
             jdbcTemplate.update(SQL_LOCK);
-            currentChunk = jdbcTemplate.queryForInt(SQL_SELECT);
+            currentChunk = queryForInt(jdbcTemplate, SQL_SELECT);
             if (logger.isDebugEnabled())
                 logger.debug("Current chunk: " + currentChunk);
             jdbcTemplate.execute(SQL_UPDATE);
@@ -111,5 +112,10 @@ public class SimpleHiloIdentifierGenerator implements IdentifierGenerator, Ident
             logger.error("Unable to update current chunk", e);
             throw new IllegalStateException("Unable to update current chunk");
         }
+    }
+
+    private int queryForInt(JdbcTemplate jdbcTemplate, String sql) throws DataAccessException {
+        Number number = jdbcTemplate.queryForObject(sql, Integer.class);
+        return (number != null ? number.intValue() : 0);
     }
 }
