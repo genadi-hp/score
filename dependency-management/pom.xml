@@ -24,11 +24,17 @@
             <artifactId>spring-beans</artifactId>
             <version>4.2.5.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>4.2.5.RELEASE</version>
+        </dependency>
     </dependencies>
 
     <modules>
         <module>dependency-management-api</module>
         <module>dependency-management-impl</module>
+        <module>pypi-support</module>
     </modules>
 
 
