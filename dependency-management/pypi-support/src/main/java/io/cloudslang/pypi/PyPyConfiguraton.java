@@ -1,5 +1,9 @@
 package io.cloudslang.pypi;
 
+import io.cloudslang.pypi.transformers.EggPackageTransformer;
+import io.cloudslang.pypi.transformers.PackageTransformer;
+import io.cloudslang.pypi.transformers.TarballPackageTransformer;
+import io.cloudslang.pypi.transformers.WheelPackageTransformer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,5 +15,20 @@ public class PyPyConfiguraton {
     @Bean
     public Pip getPip() {
         return new PipImpl();
+    }
+
+    @Bean
+    public PackageTransformer wheelPackageTransformer() {
+        return new WheelPackageTransformer();
+    }
+
+    @Bean
+    public PackageTransformer eggPackageTransformer() {
+        return new EggPackageTransformer();
+    }
+
+    @Bean
+    public PackageTransformer tarballPackageTransformer() {
+        return new TarballPackageTransformer();
     }
 }
