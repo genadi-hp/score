@@ -103,7 +103,7 @@ public class PipImpl implements Pip {
         String processStr = requirement.trim();
         int index = processStr.indexOf(STRREQUIREMENT_EQ);
         if(index > 0) {
-            return processStr.substring(0, index);
+            return processStr.substring(0, index).trim();
         }
         return null;
     }
@@ -113,7 +113,7 @@ public class PipImpl implements Pip {
         String processStr = requirement.trim();
         int index = processStr.indexOf(STRREQUIREMENT_EQ);
         if((index > -1) && (processStr.length() > (index + STRREQUIREMENT_EQ.length()))) {
-            return processStr.substring(index + STRREQUIREMENT_EQ.length());
+            return processStr.substring(index + STRREQUIREMENT_EQ.length()).trim();
         }
         return null;
     }
