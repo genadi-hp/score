@@ -62,8 +62,6 @@ public class PipImpl implements Pip {
             downloadFolder = downloadFolder.substring(0, downloadFolder.length() - 1);
         }
 
-        cleanDownloadFolder(downloadFolder);
-
         if(isPipConfigured()) {
             logger.info("Downloading library [" + libraryRequirement + "] to folder [" + downloadFolder + "]");
             String downloadScript = "import pip\npip.main(['download', '-i', '" + pypiUrl + "', '-d', '" + downloadFolder + "','" + libraryRequirement + "'])";
@@ -81,21 +79,10 @@ public class PipImpl implements Pip {
         if(libraries != null) {
             for(File library: libraries) {
                 String absolutePath = library.getAbsolutePath();
-                String extension = absolutePath.substring(absolutePath.lastIndexOf("."));
+                String extension = absolutePath.substring(absolutePath.lastIndexOf('.'));
                 PackageTransformer packageTransformer = packageTransformerMap.get(extension.toLowerCase());
                 if(packageTransformer != null) {
                     packageTransformer.transform(absolutePath);
-                }
-            }
-        }
-    }
-
-    private void cleanDownloadFolder(String downloadFolder) {
-        File[] existingLibraries = new File(downloadFolder).listFiles();
-        if(existingLibraries != null) {
-            for (File library : existingLibraries) {
-                if(!library.delete()) {
-                    logger.error("Failed to delete [" + library.getAbsolutePath() + "] when cleaning folder");
                 }
             }
         }
@@ -122,7 +109,7 @@ public class PipImpl implements Pip {
     }
 
     @Override
-    public String getVersionFromRequirement(String requirement) {
+    public String getLibraryVersionFromRequirement(String requirement) {
         String processStr = requirement.trim();
         int index = processStr.indexOf(STRREQUIREMENT_EQ);
         if((index > -1) && (processStr.length() > (index + STRREQUIREMENT_EQ.length()))) {

@@ -36,10 +36,14 @@ public class PipManager {
             return;
         }
 
-        if((downloadFolder == null) && (mavenRepoFolder == null)) {
-            System.out.println("Download folder or maven repo folder should be provided, use -d and/or -m flags");
+        if(downloadFolder == null) {
+            System.out.println("Download folder should be provided, use -d");
             printUsage();
             return;
+        }
+
+        if(mavenRepoFolder == null) {
+            System.out.println("Maven repo folder is not provided, use -m. Skipping transformation to maven");
         }
 
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(PyPyConfiguraton.class);
@@ -49,15 +53,13 @@ public class PipManager {
         } else {
             if(pip.isPipRequirement(libraryRequirement)) {
                 String libraryName = pip.getLibraryNameFromRequirement(libraryRequirement);
-                String libraryVersion = pip.getVersionFromRequirement(libraryRequirement);
-
-                if(downloadFolder!= null) {
-                    pip.download(libraryName, libraryVersion, downloadFolder);
-                }
+                String libraryVersion = pip.getLibraryVersionFromRequirement(libraryRequirement);
 
                 if(mavenRepoFolder != null) {
-                    Pip2Maven pip2Maven = context.getBean(Pip2Maven.class);
-                    pip2Maven.pip2Maven(libraryName, libraryVersion, downloadFolder, mavenRepoFolder);
+                    Pip2MavenAdapter pip2MavenAdapter = context.getBean(Pip2MavenAdapter.class);
+                    pip2MavenAdapter.downloadDependencies(libraryName, libraryVersion, downloadFolder, mavenRepoFolder);
+                } else {
+                    pip.download(libraryName, libraryVersion, downloadFolder);
                 }
             }
         }

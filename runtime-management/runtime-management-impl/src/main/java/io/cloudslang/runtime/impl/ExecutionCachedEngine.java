@@ -48,7 +48,7 @@ public abstract class ExecutionCachedEngine<T extends Executor> extends Executio
                     candidateForRemove = iterator.next().getValue();
                     iterator.remove();
                 }
-                executor = createNewExecutor(getDependencyService().getDependencies(dependencies));
+                executor = createNewExecutor(getDependencies(dependencies));
             } else {
                 // remove it and place at the end - most recently used
                 executors.remove(dependenciesKey);
@@ -63,6 +63,8 @@ public abstract class ExecutionCachedEngine<T extends Executor> extends Executio
         }
         return executor;
     }
+
+    protected abstract Set<String> getDependencies(Set<String> dependencies);
 
     protected void releaseExecutor(T executor) {
         executor.release();

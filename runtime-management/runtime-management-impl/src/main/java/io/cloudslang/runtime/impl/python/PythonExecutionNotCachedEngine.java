@@ -29,7 +29,7 @@ public class PythonExecutionNotCachedEngine implements PythonExecutionEngine{
 
     @Override
     public PythonExecutionResult exec(Set<String> dependencies, String script, Map<String, Serializable> vars) {
-        PythonExecutor pythonExecutor = new PythonExecutor(dependencyService.getDependencies(dependencies));
+        PythonExecutor pythonExecutor = new PythonExecutor(dependencyService.getPythonDependencies(dependencies));
         try {
             return pythonExecutor.exec(script, vars);
         } finally {

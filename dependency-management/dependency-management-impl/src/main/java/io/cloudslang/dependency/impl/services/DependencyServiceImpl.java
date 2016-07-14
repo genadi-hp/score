@@ -11,9 +11,11 @@ package io.cloudslang.dependency.impl.services;
 
 import io.cloudslang.dependency.api.services.DependencyService;
 import io.cloudslang.dependency.api.services.MavenConfig;
+import io.cloudslang.pypi.Pip2MavenAdapter;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.python.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
@@ -59,6 +61,9 @@ public class DependencyServiceImpl implements DependencyService {
 
     @Autowired
     private MavenConfig mavenConfig;
+
+    @Autowired
+    private Pip2MavenAdapter pip2MavenAdapter;
 
     private final Lock lock = new ReentrantLock();
 
@@ -127,7 +132,79 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     @Override
-    public Set<String> getDependencies(Set<String> resources) {
+    public Set<String> getPythonDependencies(Set<String> requirements) {
+        if(!requirements.isEmpty() && pip2MavenAdapter.isPipRequirement(requirements.iterator().next())) {
+            Set<String> mavenDependencies = Sets.newHashSet();
+            if(pip2MavenAdapter.isPipConfigured()) {
+                File downloadTempDir = createDownloadFolder();
+                for (String requirement : requirements) {
+                    downloadPythonDependency(requirement, downloadTempDir, mavenDependencies);
+                }
+                downloadTempDir.deleteOnExit();
+            } else {
+                for (String requirement : requirements) {
+                    String libraryName = pip2MavenAdapter.getLibraryNameFromRequirement(requirement);
+                    String libraryVersion = pip2MavenAdapter.getLibraryVersionFromRequirement(requirement);
+                    mavenDependencies.add(pip2MavenAdapter.pip2MavenArtifact(libraryName, libraryVersion));
+                }
+            }
+            return getMavenDependencies(mavenDependencies);
+        } else {
+            return getMavenDependencies(requirements);
+        }
+    }
+
+    private void downloadPythonDependency(String requirement, File downloadTempDir, Set<String> mavenDependencies) {
+        String libraryName = pip2MavenAdapter.getLibraryNameFromRequirement(requirement);
+        String libraryVersion = pip2MavenAdapter.getLibraryVersionFromRequirement(requirement);
+        String pip2MavenArtifact = pip2MavenAdapter.pip2MavenArtifact(libraryName, libraryVersion);
+        mavenDependencies.add(pip2MavenArtifact);
+
+        String [] gav = extractGav(pip2MavenArtifact);
+        String pomFilePath = getResourceFolderPath(gav) + SEPARATOR + getFileName(gav, MavenConfig.POM_EXTENSION);
+        File file = new File(pomFilePath);
+        if(!file.exists()) {
+            lock.lock();
+            try {
+                //double check if file was just created
+                if(!file.exists()) {
+                    cleanDownloadFolder(downloadTempDir);
+
+                    pip2MavenAdapter.downloadDependencies(libraryName, libraryVersion,
+                            downloadTempDir.getAbsolutePath(),
+                            mavenConfig.getLocalMavenRepoPath() + SEPARATOR);
+                    cleanDownloadFolder(downloadTempDir);
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    private File createDownloadFolder() {
+        File downloadTempDir;
+        try {
+            downloadTempDir = File.createTempFile("pip", "maven");
+            downloadTempDir.mkdirs();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create download folder for pip2maven transformation", e);
+        }
+        return downloadTempDir;
+    }
+
+    private void cleanDownloadFolder(File downloadFolder) {
+        File[] existingLibraries = downloadFolder.listFiles();
+        if(existingLibraries != null) {
+            for (File library : existingLibraries) {
+                if(!library.delete()) {
+                    logger.error("Failed to delete [" + library.getAbsolutePath() + "] when cleaning folder");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Set<String> getMavenDependencies(Set<String> resources) {
         Set<String> resolvedResources = new HashSet<>(resources.size());
         for (String resource : resources) {
             String[] gav = extractGav(resource);

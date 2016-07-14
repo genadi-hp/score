@@ -53,6 +53,11 @@ public class PythonExecutionCachedEngine extends ExecutionCachedEngine<PythonExe
     }
 
     @Override
+    protected Set<String> getDependencies(Set<String> dependencies) {
+        return getDependencyService().getPythonDependencies(dependencies);
+    }
+
+    @Override
     protected DependencyService getDependencyService() {
         return dependencyService;
     }

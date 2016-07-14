@@ -64,7 +64,12 @@ public class JavaRuntimeServiceImplTest {
         @Bean
         public DependencyService dependencyService() {return new DependencyService() {
             @Override
-            public Set<String> getDependencies(Set<String> resources) {
+            public Set<String> getPythonDependencies(Set<String> requirements) {
+                return new HashSet<>(Arrays.asList("c:\\a.jar", "c:\\b.jar"));
+            }
+
+            @Override
+            public Set<String> getMavenDependencies(Set<String> resources) {
                 return new HashSet<>(Arrays.asList("c:\\a.jar", "c:\\b.jar"));
             }
         };}

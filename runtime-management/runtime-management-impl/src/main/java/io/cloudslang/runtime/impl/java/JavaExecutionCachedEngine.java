@@ -41,6 +41,11 @@ public class JavaExecutionCachedEngine extends ExecutionCachedEngine<JavaExecuto
     }
 
     @Override
+    protected Set<String> getDependencies(Set<String> dependencies) {
+        return getDependencyService().getMavenDependencies(dependencies);
+    }
+
+    @Override
     protected DependencyService getDependencyService() {
         return dependencyService;
     }

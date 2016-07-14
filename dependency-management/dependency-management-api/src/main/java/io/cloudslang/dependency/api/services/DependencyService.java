@@ -13,5 +13,6 @@ package io.cloudslang.dependency.api.services;
 import java.util.Set;
 
 public interface DependencyService {
-    Set<String> getDependencies(Set<String> resources);
+    Set<String> getPythonDependencies(Set<String> requirements);
+    Set<String> getMavenDependencies(Set<String> resources);
 }

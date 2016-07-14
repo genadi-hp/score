@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Created by Genadi Rabinovich, genadi@hpe.com on 14/07/2016.
  */
-public class Pip2MavenImpl implements Pip2Maven {
+public class Pip2MavenTransformerImpl implements Pip2MavenTransformer {
     private static final Logger logger = Logger.getLogger(PackageTransformer.class);
 
     public static final String PYTHON_GROUP = "python";
@@ -67,23 +67,28 @@ public class Pip2MavenImpl implements Pip2Maven {
         deployLibrary(mavenRepoFolder, libraryName, libraryVersion, mainLibrary, dependencies);
     }
 
+    @Override
+    public String pip2MavenArtifact(String libraryName, String libraryVersion) {
+        return PYTHON_GROUP + ":" + libraryName + ":" + libraryVersion;
+    }
+
     private void deployLibrary(String mavenRepoFolder,
                                String libraryName, String libraryVersion, File mainLibrary,
                                Set<File> dependencies) {
         String libPomStr = MessageFormat.format(TEMPLATE_START_LIBRARY_POM, libraryName, libraryVersion);
         StringBuilder libPom = new StringBuilder(libPomStr);
-        libPom.append("<dependencies>\n");
+        libPom.append("    <dependencies>\n");
         for (File dependency : dependencies) {
             deployDependency(mavenRepoFolder, dependency);
             String [] av = extractAV(dependency);
-            libPom.append("    <dependency>\n");
-            libPom.append("        <groupId>" + PYTHON_GROUP + "</groupId>\n");
-            libPom.append("        <artifactId>" + av[0] + "</artifactId>\n");
-            libPom.append("        <version>" + av[1] + "</version>\n");
-            libPom.append("        <type>" + ZIP_TYPE + "</type>\n");
-            libPom.append("    </dependency>\n");
+            libPom.append("        <dependency>\n");
+            libPom.append("            <groupId>" + PYTHON_GROUP + "</groupId>\n");
+            libPom.append("            <artifactId>" + av[0] + "</artifactId>\n");
+            libPom.append("            <version>" + av[1] + "</version>\n");
+            libPom.append("            <type>" + ZIP_TYPE + "</type>\n");
+            libPom.append("        </dependency>\n");
         }
-        libPom.append("</dependencies>\n");
+        libPom.append("    </dependencies>\n");
         libPom.append(TEMPLATE_END_LIBRARY_POM);
 
         createArtifact(mavenRepoFolder, mainLibrary, new String[]{libraryName, libraryVersion}, libPom.toString());
@@ -97,14 +102,20 @@ public class Pip2MavenImpl implements Pip2Maven {
     }
 
     private void createArtifact(String mavenRepoFolder, File lib, String[] libAV, String libPomStr) {
+        logger.info("Creating artifact for [" + libAV[0] + "]-[" + libAV[1] + "]");
         String artifactName = libAV[0] + "-" + libAV[1];
         File pythonGroupFolder = new File(new File(mavenRepoFolder), PYTHON_GROUP);
         pythonGroupFolder.mkdirs();
         File artifactFolder = new File(new File(pythonGroupFolder, libAV[0]), libAV[1]);
         artifactFolder.mkdirs();
-        lib.renameTo(new File(artifactFolder, artifactName + PackageTransformer.ZIP_EXTENSION));
+
+        File artifactFile = new File(artifactFolder, artifactName + PackageTransformer.ZIP_EXTENSION);
+        logger.info("Moving [" + lib.getAbsolutePath() + "] to [" + artifactFile.getAbsolutePath() + "]");
+        lib.renameTo(artifactFile);
 
         File pomFile = new File(artifactFolder, artifactName + POM_EXTENSION);
+
+        logger.info("Creating pom for [" + libAV[0] + "]-[" + libAV[1] + "] --> [" + pomFile.getAbsolutePath() + "]");
         try (OutputStream os = new FileOutputStream(pomFile)) {
             os.write(libPomStr.getBytes());
             os.flush();
@@ -116,7 +127,7 @@ public class Pip2MavenImpl implements Pip2Maven {
     String [] extractAV(File lib) {
         String path = lib.getName();
         String dependencyStr = path.substring(0, path.length() - PackageTransformer.ZIP_EXTENSION.length());
-        return new String[]{dependencyStr.substring(0, dependencyStr.indexOf("-")).toLowerCase(),
-                dependencyStr.substring(dependencyStr.indexOf("-") + 1).toLowerCase()};
+        return new String[]{dependencyStr.substring(0, dependencyStr.indexOf('-')).toLowerCase(),
+                dependencyStr.substring(dependencyStr.indexOf('-') + 1).toLowerCase()};
     }
 }

@@ -5,6 +5,11 @@ import io.cloudslang.dependency.api.services.MavenConfig;
 import io.cloudslang.dependency.impl.services.DependencyServiceImpl;
 import io.cloudslang.dependency.impl.services.MavenConfigImpl;
 import io.cloudslang.dependency.impl.services.utils.UnzipUtil;
+import io.cloudslang.pypi.*;
+import io.cloudslang.pypi.transformers.EggPackageTransformer;
+import io.cloudslang.pypi.transformers.PackageTransformer;
+import io.cloudslang.pypi.transformers.TarballPackageTransformer;
+import io.cloudslang.pypi.transformers.WheelPackageTransformer;
 import io.cloudslang.runtime.api.python.PythonEvaluationResult;
 import io.cloudslang.runtime.api.python.PythonExecutionResult;
 import io.cloudslang.runtime.api.python.PythonRuntimeService;
@@ -261,10 +266,45 @@ public class PythonExecutorTest {
         @Bean public PythonRuntimeService pythonRuntimeService() {return new PythonRuntimeServiceImpl();}
         @Bean public PythonExecutionEngine pythonExecutionEngine() {return new PythonExecutionCachedEngine();}
         @Bean public DependencyService dependencyService() {return new DependencyServiceImpl() {
-            public Set<String> getDependencies(Set<String> resources) {
+            public Set<String> getMavenDependencies(Set<String> resources) {
                 return resources;
             }
         };}
         @Bean public MavenConfig mavenConfig() {return new MavenConfigImpl();}
+
+        @Bean
+        public Pip2MavenAdapter pip2MavenAdapter() {
+            return new Pip2MavenAdapterImpl();
+        }
+
+        @Bean
+        public Pip2MavenTransformer pip2MavenTransformer() {
+            return new Pip2MavenTransformerImpl();
+        }
+
+        @Bean
+        public Pip pip() {
+            return new PipImpl();
+        }
+
+        @Bean
+        public PackageTransformer wheelPackageTransformer() {
+            return new WheelPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer eggPackageTransformer() {
+            return new EggPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer tarballPackageTransformer() {
+            return new TarballPackageTransformer();
+        }
+
+        @Bean
+        public Pip2MavenTransformer pip2Maven() {
+            return new Pip2MavenTransformerImpl();
+        }
     }
 }

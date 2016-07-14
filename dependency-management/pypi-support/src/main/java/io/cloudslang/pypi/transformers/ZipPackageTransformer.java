@@ -7,13 +7,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
  * Created by Genadi Rabinovich, genadi@hpe.com on 13/07/2016.
  */
 @Component
-public class TarballPackageTransformer extends PackageTransformer {
+public class ZipPackageTransformer extends PackageTransformer {
     private static final String EGG_INFO = "egg-info";
     private static final String PKG_INFO = "pkg-info";
     public static final String TAR_EXTENSION = ".tar";
@@ -28,8 +29,8 @@ public class TarballPackageTransformer extends PackageTransformer {
     public void transform(String packagePath) {
         logger.info("Transforming format " + getSupportedFormat() + " to zip [" + packagePath + "]");
         File sourceFile = new File(packagePath);
-        File destFile = new File(packagePath.substring(0, packagePath.length() - TAR_EXTENSION.length() - GZGZ_EXTENSION.length()).toLowerCase() + ZIP_EXTENSION);
-        try(GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(sourceFile));
+        File destFile = new File(packagePath.substring(0, packagePath.length() - ZIP_EXTENSION.length()).toLowerCase() + "_temp" + ZIP_EXTENSION);
+        try(ZipInputStream zis = new ZipInputStream(new FileInputStream(sourceFile));
             ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destFile))) {
             // move the whole folder from gzip to zip which contains endsWith.caseinsensitive(EGG_INFO) or endsWith.caseinsensitive(PKG_INFO)
         } catch (IOException e) {
@@ -46,5 +47,6 @@ public class TarballPackageTransformer extends PackageTransformer {
             logger.error("Destination file [" + sourceFile + "] was not created");
         }
         sourceFile.delete();
+        destFile.renameTo(sourceFile);
     }
 }

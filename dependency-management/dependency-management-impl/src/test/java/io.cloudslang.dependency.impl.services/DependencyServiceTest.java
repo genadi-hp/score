@@ -3,6 +3,11 @@ package io.cloudslang.dependency.impl.services;
 import io.cloudslang.dependency.api.services.DependencyService;
 import io.cloudslang.dependency.api.services.MavenConfig;
 import io.cloudslang.dependency.impl.services.utils.UnzipUtil;
+import io.cloudslang.pypi.*;
+import io.cloudslang.pypi.transformers.EggPackageTransformer;
+import io.cloudslang.pypi.transformers.PackageTransformer;
+import io.cloudslang.pypi.transformers.TarballPackageTransformer;
+import io.cloudslang.pypi.transformers.WheelPackageTransformer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -59,7 +64,7 @@ public class DependencyServiceTest {
 
     @Test
     public void testMultipleDependencyResolution() {
-        Set<String> ret = dependencyService.getDependencies(new HashSet<>(Arrays.asList("groupId1:test-artifact:1.0",
+        Set<String> ret = dependencyService.getMavenDependencies(new HashSet<>(Arrays.asList("groupId1:test-artifact:1.0",
                 "groupId1:test-artifact1:1.1")));
         List<String> referenceList = Arrays.asList("C:/aaa/bbb/ccc.jar", "C:/bbb/ccc/ddd.zip", "C:/ccc/ddd/eee/fff.jar",
                 "C:/aaaa/bbbb/cccc.jar", "C:/bbbb/cccc/dddd.zip");
@@ -68,21 +73,21 @@ public class DependencyServiceTest {
 
     @Test
     public void testSingleDependencyResolution() {
-        Set<String> ret = dependencyService.getDependencies(new HashSet<>(Collections.singletonList("groupId1:test-artifact1:1.1")));
+        Set<String> ret = dependencyService.getMavenDependencies(new HashSet<>(Collections.singletonList("groupId1:test-artifact1:1.1")));
         List<String> referenceList = Arrays.asList("C:/aaaa/bbbb/cccc.jar", "C:/bbbb/cccc/dddd.zip");
         Assert.assertTrue("Unexpected returned set", ret.containsAll(referenceList) && ret.size() == referenceList.size());
     }
 
     @Test
     public void testEmptyResourceSet() {
-        Set<String> ret1 = dependencyService.getDependencies(new HashSet<String>());
+        Set<String> ret1 = dependencyService.getMavenDependencies(new HashSet<String>());
         Assert.assertTrue("Unexpected returned set", ret1.isEmpty());
     }
 
     @Test
     public void testMalformedGav() {
         try {
-            dependencyService.getDependencies(new HashSet<>(Collections.singletonList("groupId1:test-artifact1")));
+            dependencyService.getMavenDependencies(new HashSet<>(Collections.singletonList("groupId1:test-artifact1")));
             Assert.fail("Expected IllegalArgumentException, but succeeded");
         } catch (IllegalArgumentException ignore) {
 
@@ -92,7 +97,7 @@ public class DependencyServiceTest {
     @Test
     public void testBuildClassPath1() {
         Assume.assumeTrue(shouldRunMaven);
-        Set <String> ret = dependencyService.getDependencies(new HashSet<>(Collections.singletonList("groupId1:mvn_artifact1:1.0")));
+        Set <String> ret = dependencyService.getMavenDependencies(new HashSet<>(Collections.singletonList("groupId1:mvn_artifact1:1.0")));
         final List<File> retFiles = new ArrayList<>();
         for (String s : ret) {
             retFiles.add(new File(s));
@@ -117,7 +122,7 @@ public class DependencyServiceTest {
             boolean isDeleted2 = new File(basePath + "/junit/junit/4.12/junit-4.12.pom").delete();
             Assert.assertTrue(isDeleted1 && isDeleted2);
         }
-        Set <String> ret = dependencyService.getDependencies(new HashSet<>(Collections.singletonList("junit:junit:4.12")));
+        Set <String> ret = dependencyService.getMavenDependencies(new HashSet<>(Collections.singletonList("junit:junit:4.12")));
         final List<File> retFiles = new ArrayList<>();
         for (String s : ret) {
             retFiles.add(new File(s));
@@ -156,6 +161,40 @@ public class DependencyServiceTest {
             };
         }
 
+        @Bean
+        public Pip2MavenAdapter pip2MavenAdapter() {
+            return new Pip2MavenAdapterImpl();
+        }
+
+        @Bean
+        public Pip2MavenTransformer pip2MavenTransformer() {
+            return new Pip2MavenTransformerImpl();
+        }
+
+        @Bean
+        public Pip pip() {
+            return new PipImpl();
+        }
+
+        @Bean
+        public PackageTransformer wheelPackageTransformer() {
+            return new WheelPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer eggPackageTransformer() {
+            return new EggPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer tarballPackageTransformer() {
+            return new TarballPackageTransformer();
+        }
+
+        @Bean
+        public Pip2MavenTransformer pip2Maven() {
+            return new Pip2MavenTransformerImpl();
+        }
     }
 
 }

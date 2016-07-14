@@ -15,7 +15,7 @@ public abstract class PackageTransformer {
     public void transform(String packagePath) {
         logger.info("Transforming format " + getSupportedFormat() + " to zip [" + packagePath + "]");
         File source = new File(packagePath);
-        File dest = new File(packagePath.substring(0, packagePath.lastIndexOf(".")).toLowerCase() + ZIP_EXTENSION);
+        File dest = new File(packagePath.substring(0, packagePath.lastIndexOf('.')).toLowerCase() + ZIP_EXTENSION);
         if(!source.renameTo(dest)) {
             logger.error("Failed to rename [" + source.getAbsolutePath() + "] to [" + dest.getAbsolutePath() + "]");
         }

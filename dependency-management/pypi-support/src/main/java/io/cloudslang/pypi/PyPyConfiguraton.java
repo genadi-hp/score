@@ -33,7 +33,12 @@ public class PyPyConfiguraton {
     }
 
     @Bean
-    public Pip2Maven pip2Maven() {
-        return new Pip2MavenImpl();
+    public Pip2MavenTransformer pip2Maven() {
+        return new Pip2MavenTransformerImpl();
+    }
+
+    @Bean
+    public Pip2MavenAdapter pip2MavenAdapter() {
+        return new Pip2MavenAdapterImpl();
     }
 }

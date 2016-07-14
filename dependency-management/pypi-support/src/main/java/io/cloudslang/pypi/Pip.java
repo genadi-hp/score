@@ -17,5 +17,5 @@ public interface Pip {
     boolean isPipRequirement(String requirement);
 
     String getLibraryNameFromRequirement(String requirement);
-    String getVersionFromRequirement(String requirement);
+    String getLibraryVersionFromRequirement(String requirement);
 }
