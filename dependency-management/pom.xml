@@ -32,9 +32,9 @@
     </dependencies>
 
     <modules>
+        <module>pypi-support</module>
         <module>dependency-management-api</module>
         <module>dependency-management-impl</module>
-        <module>pypi-support</module>
     </modules>
 
 
