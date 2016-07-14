@@ -23,6 +23,7 @@ public class PipImpl implements Pip {
     private static final String PYTHON_LIB = "python.path";
 
     private static final String NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING = "No PyPi support. '" + PYTHON_LIB + "' system property is missing!!!";
+    public static final String STRREQUIREMENT_EQ = "==";
 
     @Value("#{ systemProperties['pypi.index.url']}")
     private String pypiUrl;
@@ -46,7 +47,7 @@ public class PipImpl implements Pip {
             logger.info("Pip package loaded to the python interpreter");
 
             for (PackageTransformer packageTransformer : packageTransformers) {
-                packageTransformerMap.put(packageTransformer.getSupportedFormat(), packageTransformer);
+                packageTransformerMap.put(packageTransformer.getSupportedFormat().toLowerCase(), packageTransformer);
             }
         } else {
             logger.info(NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING);
@@ -54,7 +55,8 @@ public class PipImpl implements Pip {
     }
 
     @Override
-    public void download(String libraryReference, String downloadFolder) {
+    public void download(String libraryName, String libraryVersion, String downloadFolder) {
+        String libraryRequirement = libraryName + STRREQUIREMENT_EQ + libraryVersion;
         downloadFolder = downloadFolder.replace("\\", File.separator).replace("/", File.separator);
         if(downloadFolder.endsWith(File.separator)) {
             downloadFolder = downloadFolder.substring(0, downloadFolder.length() - 1);
@@ -63,8 +65,8 @@ public class PipImpl implements Pip {
         cleanDownloadFolder(downloadFolder);
 
         if(isPipConfigured()) {
-            logger.info("Downloading library [" + libraryReference + "] to folder [" + downloadFolder + "]");
-            String downloadScript = "import pip\npip.main(['download', '-i', '" + pypiUrl + "', '-d', '" + downloadFolder + "','" + libraryReference + "'])";
+            logger.info("Downloading library [" + libraryRequirement + "] to folder [" + downloadFolder + "]");
+            String downloadScript = "import pip\npip.main(['download', '-i', '" + pypiUrl + "', '-d', '" + downloadFolder + "','" + libraryRequirement + "'])";
             logger.info("Executing download script [" + downloadScript + "]");
             pipExecutor.exec(downloadScript);
         } else {
@@ -79,8 +81,8 @@ public class PipImpl implements Pip {
         if(libraries != null) {
             for(File library: libraries) {
                 String absolutePath = library.getAbsolutePath();
-                String extension = absolutePath.substring(absolutePath.lastIndexOf(".") + 1);
-                PackageTransformer packageTransformer = packageTransformerMap.get(extension);
+                String extension = absolutePath.substring(absolutePath.lastIndexOf("."));
+                PackageTransformer packageTransformer = packageTransformerMap.get(extension.toLowerCase());
                 if(packageTransformer != null) {
                     packageTransformer.transform(absolutePath);
                 }
@@ -102,5 +104,30 @@ public class PipImpl implements Pip {
     @Override
     public boolean isPipConfigured() {
         return pipExecutor != null;
+    }
+
+    @Override
+    public boolean isPipRequirement(String requirement) {
+        return requirement.contains(STRREQUIREMENT_EQ);
+    }
+
+    @Override
+    public String getLibraryNameFromRequirement(String requirement) {
+        String processStr = requirement.trim();
+        int index = processStr.indexOf(STRREQUIREMENT_EQ);
+        if(index > 0) {
+            return processStr.substring(0, index);
+        }
+        return null;
+    }
+
+    @Override
+    public String getVersionFromRequirement(String requirement) {
+        String processStr = requirement.trim();
+        int index = processStr.indexOf(STRREQUIREMENT_EQ);
+        if((index > -1) && (processStr.length() > (index + STRREQUIREMENT_EQ.length()))) {
+            return processStr.substring(index + STRREQUIREMENT_EQ.length());
+        }
+        return null;
     }
 }

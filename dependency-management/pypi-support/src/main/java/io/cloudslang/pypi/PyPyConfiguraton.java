@@ -31,4 +31,9 @@ public class PyPyConfiguraton {
     public PackageTransformer tarballPackageTransformer() {
         return new TarballPackageTransformer();
     }
+
+    @Bean
+    public Pip2Maven pip2Maven() {
+        return new Pip2MavenImpl();
+    }
 }

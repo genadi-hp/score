@@ -10,7 +10,12 @@ public interface Pip {
      * @param libraryReference library to download
      * @param downloadFolder folder library should be placed
      */
-    void download(String libraryReference, String downloadFolder);
+    void download(String libraryName, String libraryVersion, String downloadFolder);
 
     boolean isPipConfigured();
+
+    boolean isPipRequirement(String requirement);
+
+    String getLibraryNameFromRequirement(String requirement);
+    String getVersionFromRequirement(String requirement);
 }
