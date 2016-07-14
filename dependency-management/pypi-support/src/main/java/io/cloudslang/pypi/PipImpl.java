@@ -23,7 +23,7 @@ public class PipImpl implements Pip {
     private static final String PYTHON_LIB = "python.path";
 
     private static final String NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING = "No PyPi support. '" + PYTHON_LIB + "' system property is missing!!!";
-    public static final String STRREQUIREMENT_EQ = "==";
+    private static final String STRREQUIREMENT_EQ = "==";
 
     @Value("#{ systemProperties['pypi.index.url']}")
     private String pypiUrl;

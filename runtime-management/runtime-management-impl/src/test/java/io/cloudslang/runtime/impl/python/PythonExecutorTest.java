@@ -6,10 +6,7 @@ import io.cloudslang.dependency.impl.services.DependencyServiceImpl;
 import io.cloudslang.dependency.impl.services.MavenConfigImpl;
 import io.cloudslang.dependency.impl.services.utils.UnzipUtil;
 import io.cloudslang.pypi.*;
-import io.cloudslang.pypi.transformers.EggPackageTransformer;
-import io.cloudslang.pypi.transformers.PackageTransformer;
-import io.cloudslang.pypi.transformers.TarballPackageTransformer;
-import io.cloudslang.pypi.transformers.WheelPackageTransformer;
+import io.cloudslang.pypi.transformers.*;
 import io.cloudslang.runtime.api.python.PythonEvaluationResult;
 import io.cloudslang.runtime.api.python.PythonExecutionResult;
 import io.cloudslang.runtime.api.python.PythonRuntimeService;
@@ -300,6 +297,11 @@ public class PythonExecutorTest {
         @Bean
         public PackageTransformer tarballPackageTransformer() {
             return new TarballPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer zipPackageTransformer() {
+            return new ZipPackageTransformer();
         }
 
         @Bean

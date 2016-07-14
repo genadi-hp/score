@@ -1,9 +1,6 @@
 package io.cloudslang.pypi;
 
-import io.cloudslang.pypi.transformers.EggPackageTransformer;
-import io.cloudslang.pypi.transformers.PackageTransformer;
-import io.cloudslang.pypi.transformers.TarballPackageTransformer;
-import io.cloudslang.pypi.transformers.WheelPackageTransformer;
+import io.cloudslang.pypi.transformers.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,6 +27,11 @@ public class PyPyConfiguraton {
     @Bean
     public PackageTransformer tarballPackageTransformer() {
         return new TarballPackageTransformer();
+    }
+
+    @Bean
+    public PackageTransformer zipPackageTransformer() {
+        return new ZipPackageTransformer();
     }
 
     @Bean

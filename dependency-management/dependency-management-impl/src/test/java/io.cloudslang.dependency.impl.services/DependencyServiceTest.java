@@ -4,10 +4,7 @@ import io.cloudslang.dependency.api.services.DependencyService;
 import io.cloudslang.dependency.api.services.MavenConfig;
 import io.cloudslang.dependency.impl.services.utils.UnzipUtil;
 import io.cloudslang.pypi.*;
-import io.cloudslang.pypi.transformers.EggPackageTransformer;
-import io.cloudslang.pypi.transformers.PackageTransformer;
-import io.cloudslang.pypi.transformers.TarballPackageTransformer;
-import io.cloudslang.pypi.transformers.WheelPackageTransformer;
+import io.cloudslang.pypi.transformers.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -189,6 +186,11 @@ public class DependencyServiceTest {
         @Bean
         public PackageTransformer tarballPackageTransformer() {
             return new TarballPackageTransformer();
+        }
+
+        @Bean
+        public PackageTransformer zipPackageTransformer() {
+            return new ZipPackageTransformer();
         }
 
         @Bean
