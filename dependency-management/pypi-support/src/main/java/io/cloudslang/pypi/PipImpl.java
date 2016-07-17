@@ -53,7 +53,7 @@ public class PipImpl implements Pip {
     @Override
     public void download(String libraryName, String libraryVersion, String downloadFolder) {
         String libraryRequirement = libraryName + STRREQUIREMENT_EQ + libraryVersion;
-        downloadFolder = downloadFolder.replace("\\", File.separator).replace("/", File.separator);
+        downloadFolder = downloadFolder.replace("\\", "/");
         if(downloadFolder.endsWith(File.separator)) {
             downloadFolder = downloadFolder.substring(0, downloadFolder.length() - 1);
         }

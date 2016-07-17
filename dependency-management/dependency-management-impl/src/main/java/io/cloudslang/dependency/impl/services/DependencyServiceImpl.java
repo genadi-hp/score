@@ -16,6 +16,7 @@ import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.python.google.common.collect.Sets;
+import org.python.google.common.io.Files;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
@@ -136,7 +137,7 @@ public class DependencyServiceImpl implements DependencyService {
         if(!requirements.isEmpty() && pip2MavenAdapter.isPipRequirement(requirements.iterator().next())) {
             Set<String> mavenDependencies = Sets.newHashSet();
             if(pip2MavenAdapter.isPipConfigured()) {
-                File downloadTempDir = createDownloadFolder();
+                File downloadTempDir = Files.createTempDir();
                 for (String requirement : requirements) {
                     downloadPythonDependency(requirement, downloadTempDir, mavenDependencies);
                 }
@@ -179,17 +180,6 @@ public class DependencyServiceImpl implements DependencyService {
                 lock.unlock();
             }
         }
-    }
-
-    private File createDownloadFolder() {
-        File downloadTempDir;
-        try {
-            downloadTempDir = File.createTempFile("pip", "maven");
-            downloadTempDir.mkdirs();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create download folder for pip2maven transformation", e);
-        }
-        return downloadTempDir;
     }
 
     private void cleanDownloadFolder(File downloadFolder) {

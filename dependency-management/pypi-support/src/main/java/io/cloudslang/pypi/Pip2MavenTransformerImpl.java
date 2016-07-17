@@ -19,22 +19,21 @@ public class Pip2MavenTransformerImpl implements Pip2MavenTransformer {
 
     private static final String POM_EXTENSION = ".pom";
 
-    private static final String TEMPLATE_DEPENDENCY_POM = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+    private static final String TEMPLATE_START_POM = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
             "    <modelVersion>4.0.0</modelVersion>\n" +
             "    <groupId>" + PYTHON_GROUP + "</groupId>\n" +
             "    <artifactId>{0}</artifactId>\n" +
-            "    <version>{1}</version>\n" +
-            "    <type>" + ZIP_TYPE + "</type>\n" +
-            "</project>\n";
+            "    <version>{1}</version>\n";
 
-    private static final String TEMPLATE_START_LIBRARY_POM = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-            "    <modelVersion>4.0.0</modelVersion>\n" +
-            "    <groupId>" + PYTHON_GROUP + "</groupId>\n" +
-            "    <artifactId>{0}</artifactId>\n" +
-            "    <version>{1}</version>\n" +
-            "    <type>" + ZIP_TYPE + "</type>\n";
+    private static final String TEMPLATE_DEPENDENCY =
+            "        <dependency>\n" +
+            "            <groupId>" + PYTHON_GROUP + "</groupId>\n" +
+            "            <artifactId>{0}</artifactId>\n" +
+            "            <version>{1}</version>\n" +
+            "            <type>" + ZIP_TYPE + "</type>\n" +
+            "        </dependency>\n";
 
-    private static final String TEMPLATE_END_LIBRARY_POM = "</project>\n";
+    private static final String TEMPLATE_END_POM = "</project>\n";
 
     @Override
     public void pip2Maven(String libraryName, String libraryVersion, String pipLibraryFolder, String mavenRepoFolder) {
@@ -69,34 +68,31 @@ public class Pip2MavenTransformerImpl implements Pip2MavenTransformer {
 
     @Override
     public String pip2MavenArtifact(String libraryName, String libraryVersion) {
-        return PYTHON_GROUP + ":" + libraryName + ":" + libraryVersion;
+        return PYTHON_GROUP + ":" + libraryName + ":" + libraryVersion + ":" + ZIP_TYPE;
     }
 
     private void deployLibrary(String mavenRepoFolder,
                                String libraryName, String libraryVersion, File mainLibrary,
                                Set<File> dependencies) {
-        String libPomStr = MessageFormat.format(TEMPLATE_START_LIBRARY_POM, libraryName, libraryVersion);
+        String libPomStr = MessageFormat.format(TEMPLATE_START_POM, libraryName, libraryVersion);
         StringBuilder libPom = new StringBuilder(libPomStr);
-        libPom.append("    <dependencies>\n");
-        for (File dependency : dependencies) {
-            deployDependency(mavenRepoFolder, dependency);
-            String [] av = extractAV(dependency);
-            libPom.append("        <dependency>\n");
-            libPom.append("            <groupId>" + PYTHON_GROUP + "</groupId>\n");
-            libPom.append("            <artifactId>" + av[0] + "</artifactId>\n");
-            libPom.append("            <version>" + av[1] + "</version>\n");
-            libPom.append("            <type>" + ZIP_TYPE + "</type>\n");
-            libPom.append("        </dependency>\n");
+        if((dependencies != null) && !dependencies.isEmpty()) {
+            libPom.append("    <dependencies>\n");
+            for (File dependency : dependencies) {
+                deployDependency(mavenRepoFolder, dependency);
+                String [] av = extractAV(dependency);
+                libPom.append(MessageFormat.format(TEMPLATE_DEPENDENCY, av[0], av[1]));
+            }
+            libPom.append("    </dependencies>\n");
         }
-        libPom.append("    </dependencies>\n");
-        libPom.append(TEMPLATE_END_LIBRARY_POM);
+        libPom.append(TEMPLATE_END_POM);
 
         createArtifact(mavenRepoFolder, mainLibrary, new String[]{libraryName, libraryVersion}, libPom.toString());
     }
 
     private void deployDependency(String mavenRepoFolder, File lib) {
         String [] libAV = extractAV(lib);
-        String libPomStr = MessageFormat.format(TEMPLATE_DEPENDENCY_POM, libAV[0], libAV[1]);
+        String libPomStr = MessageFormat.format(TEMPLATE_START_POM + TEMPLATE_END_POM, libAV[0], libAV[1]);
 
         createArtifact(mavenRepoFolder, lib, libAV, libPomStr);
     }
