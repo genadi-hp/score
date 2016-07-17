@@ -20,6 +20,7 @@ public class PipImpl implements Pip {
 
     private static final String NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING = "No PyPi support. '" + PYTHON_LIB + "' system property is missing!!!";
     private static final String STRREQUIREMENT_EQ = "==";
+    public static final String UNIX_SEPARATOR = "/";
 
     @Value("#{ systemProperties['" + PYPI_REPOSITORY_PROPERTY + "']}")
     private String pypiUrl;
@@ -53,8 +54,8 @@ public class PipImpl implements Pip {
     @Override
     public void download(String libraryName, String libraryVersion, String downloadFolder) {
         String libraryRequirement = libraryName + STRREQUIREMENT_EQ + libraryVersion;
-        downloadFolder = downloadFolder.replace("\\", "/");
-        if(downloadFolder.endsWith(File.separator)) {
+        downloadFolder = downloadFolder.replace("\\", UNIX_SEPARATOR);
+        if(downloadFolder.endsWith(UNIX_SEPARATOR)) {
             downloadFolder = downloadFolder.substring(0, downloadFolder.length() - 1);
         }
 

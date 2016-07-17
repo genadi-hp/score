@@ -290,11 +290,6 @@ public class PythonExecutorTest {
         }
 
         @Bean
-        public PackageTransformer eggPackageTransformer() {
-            return new EggPackageTransformer();
-        }
-
-        @Bean
         public PackageTransformer tarballPackageTransformer() {
             return new TarballPackageTransformer();
         }

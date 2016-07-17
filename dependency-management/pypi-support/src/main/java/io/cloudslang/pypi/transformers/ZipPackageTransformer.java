@@ -22,7 +22,7 @@ public class ZipPackageTransformer extends PackageTransformer {
 
     @Override
     public String getSupportedFormat() {
-        return GZGZ_EXTENSION;
+        return ZIP_EXTENSION;
     }
 
     @Override
