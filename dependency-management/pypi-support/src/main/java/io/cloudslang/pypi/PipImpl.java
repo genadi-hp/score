@@ -18,14 +18,10 @@ import java.util.Map;
 public class PipImpl implements Pip {
     private static final Logger logger = Logger.getLogger(PipImpl.class);
 
-    private static final String DEFAULT_PYPI_REPOSITORY = "https://pypi.python.org/simple";
-
-    private static final String PYTHON_LIB = "python.path";
-
     private static final String NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING = "No PyPi support. '" + PYTHON_LIB + "' system property is missing!!!";
     private static final String STRREQUIREMENT_EQ = "==";
 
-    @Value("#{ systemProperties['pypi.index.url']}")
+    @Value("#{ systemProperties['" + PYPI_REPOSITORY_PROPERTY + "']}")
     private String pypiUrl;
 
     @Value("#{systemProperties['" + PYTHON_LIB + "']}")

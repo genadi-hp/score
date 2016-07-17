@@ -18,10 +18,12 @@ public class UnzipUtil {
             try (ZipInputStream zio = new ZipInputStream(source)) {
                 ZipEntry ze;
                 while ((ze = zio.getNextEntry()) != null) {
+                    File file = new File(mavenHome, ze.getName());
                     if(ze.isDirectory()) {
-                        new File(mavenHome, ze.getName()).mkdirs();
+                        file.mkdirs();
                     } else {
-                        try (FileOutputStream fos = new FileOutputStream(new File(mavenHome, ze.getName()))) {
+                        file.getParentFile().mkdirs();
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
                             int len;
                             while ((len = zio.read(buffer)) > 0)
                             {
