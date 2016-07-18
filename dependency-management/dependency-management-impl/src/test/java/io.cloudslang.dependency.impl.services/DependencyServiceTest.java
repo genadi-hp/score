@@ -189,9 +189,17 @@ public class DependencyServiceTest {
         }
 
         @Bean
+        public PackageTransformer eggPackageTransformer() {
+            return new EggPackageTransformer();
+        }
+
+        @Bean
         public Pip2MavenTransformer pip2Maven() {
             return new Pip2MavenTransformerImpl();
         }
+
+        @Bean
+        public PyPiMetaDataHelper pyPiMetaDataHelper() {return new PyPiMetaDataHelper();}
     }
 
 }

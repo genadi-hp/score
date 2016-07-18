@@ -18,24 +18,21 @@ public class PyPyConfiguraton {
     public PackageTransformer wheelPackageTransformer() {
         return new WheelPackageTransformer();
     }
-
+    @Bean
+    public PackageTransformer eggPackageTransformer() {
+        return new EggPackageTransformer();
+    }
     @Bean
     public PackageTransformer tarballPackageTransformer() {
         return new TarballPackageTransformer();
     }
-
     @Bean
     public PackageTransformer zipPackageTransformer() {
         return new ZipPackageTransformer();
     }
 
     @Bean
-    public Pip2MavenTransformer pip2Maven() {
-        return new Pip2MavenTransformerImpl();
-    }
-
-    @Bean
-    public Pip2MavenAdapter pip2MavenAdapter() {
-        return new Pip2MavenAdapterImpl();
+    public PyPiMetaDataHelper pyPiMetaData() {
+        return new PyPiMetaDataHelper();
     }
 }

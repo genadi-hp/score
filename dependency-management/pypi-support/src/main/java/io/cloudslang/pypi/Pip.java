@@ -11,15 +11,35 @@ public interface Pip {
     /**
      * Download specified library and all transitive dependencies to specified
      * folder
-     * @param libraryReference library to download
+     * @param libraryName library to download
+     * @param libraryVersion library version to download
      * @param downloadFolder folder library should be placed
      */
-    void download(String libraryName, String libraryVersion, String downloadFolder);
+    PypiLibrary download(String libraryName, String libraryVersion, String downloadFolder);
+
+    /**
+     * Download any (seems like latest) version and all transitive dependencies to specified
+     * folder
+     * @param downloadFolder folder library should be placed
+     * @param libraryName
+     * @param downloadFolder
+     */
+    PypiLibrary download(String libraryName, String downloadFolder);
+    /**
+     * Download library by condition (<=, >=, ==) and all transitive dependencies to specified
+     * folder
+     * @param libraryName library to download
+     * @param condition condition for library version
+     * @param libraryVersion library version to download
+     * @param downloadFolder folder library should be placed
+     */
+    PypiLibrary download(String libraryName, String condition, String libraryVersion, String downloadFolder);
 
     boolean isPipConfigured();
 
     boolean isPipRequirement(String requirement);
 
     String getLibraryNameFromRequirement(String requirement);
+    String getRequirementCondition(String requirement);
     String getLibraryVersionFromRequirement(String requirement);
 }

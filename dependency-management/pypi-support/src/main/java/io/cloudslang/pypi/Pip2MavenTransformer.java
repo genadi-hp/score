@@ -6,12 +6,10 @@ package io.cloudslang.pypi;
 public interface Pip2MavenTransformer {
     /**
      * Converts provided library with all its dependency libraries to maven artifacts
-     * @param libraryName pip library name
-     * @param libraryVersion pip library version
-     * @param pipLibraryFolder pip containing folder
+     * @param pypiLibrary pip library
      * @param mavenRepoFolder maven repo folder
      */
-    void pip2Maven(String libraryName, String libraryVersion, String pipLibraryFolder, String mavenRepoFolder);
+    void pip2Maven(PypiLibrary pypiLibrary, String mavenRepoFolder);
 
     String pip2MavenArtifact(String libraryName, String libraryVersion);
 }

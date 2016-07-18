@@ -9,11 +9,17 @@ import java.io.File;
  */
 public abstract class PackageTransformer {
     protected static final Logger logger = Logger.getLogger(PackageTransformer.class);
-    public static final String ZIP_EXTENSION = ".zip";
 
+    protected static final int DEFAULT_BUFFER_SIZE = 4096;
+    public static final String ZIP_EXTENSION = ".zip";
+    protected static final String EGG_INFO = "egg-info";
+    protected static final String PKG_INFO = "pkg-info";
+
+
+    public abstract boolean isSupportedFormat(String extension);
     public abstract String getSupportedFormat();
     public void transform(String packagePath) {
-        logger.info("Transforming format " + getSupportedFormat() + " to zip [" + packagePath + "]");
+        logger.info("Transforming to zip [" + packagePath + "]");
         File source = new File(packagePath);
         File dest = new File(packagePath.substring(0, packagePath.lastIndexOf('.')).toLowerCase() + ZIP_EXTENSION);
         if(!source.renameTo(dest)) {
@@ -26,4 +32,6 @@ public abstract class PackageTransformer {
             logger.error("Destination file [" + dest.getAbsolutePath() + "] was not created");
         }
     }
+
+    public abstract String getMetaData(String absolutePath);
 }

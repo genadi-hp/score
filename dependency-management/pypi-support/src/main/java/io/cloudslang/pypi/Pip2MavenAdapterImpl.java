@@ -34,8 +34,7 @@ public class Pip2MavenAdapterImpl implements Pip2MavenAdapter {
 
     @Override
     public void downloadDependencies(String libraryName, String libraryVersion, String downloadFolder, String mavenRepo) {
-        pip.download(libraryName, libraryVersion, downloadFolder);
-        pip2MavenTransformer.pip2Maven(libraryName, libraryVersion, downloadFolder, mavenRepo);
+        pip2MavenTransformer.pip2Maven(pip.download(libraryName, libraryVersion, downloadFolder), mavenRepo);
     }
 
     @Override

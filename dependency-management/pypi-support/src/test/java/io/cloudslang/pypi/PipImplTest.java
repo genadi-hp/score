@@ -47,8 +47,9 @@ public class PipImplTest {
     @Test
     public void testJenkinsapi_0_2_20_wheels() {
         Set<String> expectedDependencies = Sets.newHashSet("jenkinsapi-0.2.20-py2-none-any.zip",
-                "pytz-2016.6.1-py2.py3-none-any.zip",
-                "requests-2.10.0-py2.py3-none-any.zip");
+                "pytz-2016.6.1-py2.py3-none-any.zip", "requests-2.10.0-py2.py3-none-any.zip",
+                "pyasn1-0.1.9-py2.py3-none-any.zip", "pyopenssl-16.0.0-py2.py3-none-any.zip",
+                "six-1.10.0-py2.py3-none-any.zip");
         checkDependencies("jenkinsapi", "0.2.20", expectedDependencies);
     }
 

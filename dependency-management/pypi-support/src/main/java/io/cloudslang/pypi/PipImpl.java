@@ -1,16 +1,15 @@
 package io.cloudslang.pypi;
 
-import io.cloudslang.pypi.transformers.PackageTransformer;
+import io.cloudslang.pypi.transformers.PyPiMetaDataHelper;
+import io.cloudslang.pypi.transformers.PyPiRequire;
+import io.cloudslang.utils.PyPiRequireUtils;
 import org.apache.log4j.Logger;
-import org.python.google.common.collect.Maps;
 import org.python.util.PythonInterpreter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Genadi Rabinovich, genadi@hpe.com on 13/07/2016.
@@ -19,7 +18,6 @@ public class PipImpl implements Pip {
     private static final Logger logger = Logger.getLogger(PipImpl.class);
 
     private static final String NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING = "No PyPi support. '" + PYTHON_LIB + "' system property is missing!!!";
-    private static final String STRREQUIREMENT_EQ = "==";
     public static final String UNIX_SEPARATOR = "/";
 
     @Value("#{ systemProperties['" + PYPI_REPOSITORY_PROPERTY + "']}")
@@ -29,9 +27,7 @@ public class PipImpl implements Pip {
     private String pythonLib;
 
     @Autowired
-    private List<PackageTransformer> packageTransformers;
-
-    private final Map<String, PackageTransformer> packageTransformerMap = Maps.newHashMap();
+    private PyPiMetaDataHelper pyPiMetaDataHelper;
 
     private PythonInterpreter pipExecutor;
 
@@ -42,18 +38,31 @@ public class PipImpl implements Pip {
 
             pipExecutor = new PythonInterpreter();
             logger.info("Pip package loaded to the python interpreter");
-
-            for (PackageTransformer packageTransformer : packageTransformers) {
-                packageTransformerMap.put(packageTransformer.getSupportedFormat().toLowerCase(), packageTransformer);
-            }
         } else {
             logger.info(NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING);
         }
     }
 
     @Override
-    public void download(String libraryName, String libraryVersion, String downloadFolder) {
-        String libraryRequirement = libraryName + STRREQUIREMENT_EQ + libraryVersion;
+    public PypiLibrary download(String libraryName, String libraryVersion, String downloadFolder) {
+        return download(libraryName, PyPiRequireUtils.REQUIRE_EQ, libraryVersion, downloadFolder);
+    }
+
+    @Override
+    public PypiLibrary download(String libraryName, String downloadFolder) {
+        return download(libraryName, null, null, downloadFolder);
+    }
+
+    @Override
+    public PypiLibrary download(String libraryName, String condition, String libraryVersion, String downloadFolder) {
+        PypiLibrary pypiLibrary = downloadLibraries(libraryName, condition, libraryVersion, downloadFolder);
+        pyPiMetaDataHelper.transformLibrariesToZip(downloadFolder);
+        return pypiLibrary;
+    }
+
+
+    private PypiLibrary downloadLibraries(String libraryName, String condition, String libraryVersion, String downloadFolder) {
+        String libraryRequirement = libraryName + (condition != null ? (condition + libraryVersion) : "");
         downloadFolder = downloadFolder.replace("\\", UNIX_SEPARATOR);
         if(downloadFolder.endsWith(UNIX_SEPARATOR)) {
             downloadFolder = downloadFolder.substring(0, downloadFolder.length() - 1);
@@ -67,22 +76,28 @@ public class PipImpl implements Pip {
         } else {
             logger.error(NO_PY_PI_SUPPORT_PIP_HOME_IS_MISSING);
         }
-
-        transformLibrariesToZip(downloadFolder);
+        return loadLibrary(libraryName, condition, libraryVersion, downloadFolder);
     }
 
-    private void transformLibrariesToZip(String downloadFolder) {
-        File[] libraries = new File(downloadFolder).listFiles();
-        if(libraries != null) {
-            for(File library: libraries) {
-                String absolutePath = library.getAbsolutePath();
-                String extension = absolutePath.substring(absolutePath.lastIndexOf('.'));
-                PackageTransformer packageTransformer = packageTransformerMap.get(extension.toLowerCase());
-                if(packageTransformer != null) {
-                    packageTransformer.transform(absolutePath);
+    private PypiLibrary loadLibrary(String libraryName, String condition, String libraryVersion, String downloadFolder) {
+        File pipLibraryFolderFile = new File(downloadFolder);
+        File [] libraries = pipLibraryFolderFile.listFiles();
+
+        PypiLibrary pypiLibrary = pyPiMetaDataHelper.loadLibrary(libraryName, condition, libraryVersion, libraries);
+        if(pypiLibrary != null) {
+            for(PyPiRequire require: pypiLibrary.getRequires()) {
+                PypiLibrary dependencyLibrary =
+                        loadLibrary(require.getLibrary(), require.getCondition(), require.getVersion(), downloadFolder);
+                if(dependencyLibrary == null) {
+                    dependencyLibrary =
+                            downloadLibraries(require.getLibrary(), require.getCondition(), require.getVersion(), downloadFolder);
+                }
+                if(dependencyLibrary != null) {
+                    pypiLibrary.addDependency(dependencyLibrary);
                 }
             }
         }
+        return pypiLibrary;
     }
 
     @Override
@@ -92,26 +107,22 @@ public class PipImpl implements Pip {
 
     @Override
     public boolean isPipRequirement(String requirement) {
-        return requirement.contains(STRREQUIREMENT_EQ);
+        //we support only == for upper levels
+        return requirement.contains(PyPiRequireUtils.REQUIRE_EQ);
     }
 
     @Override
     public String getLibraryNameFromRequirement(String requirement) {
-        String processStr = requirement.trim();
-        int index = processStr.indexOf(STRREQUIREMENT_EQ);
-        if(index > 0) {
-            return processStr.substring(0, index).trim();
-        }
-        return null;
+        return pyPiMetaDataHelper.getLibraryNameFromRequirement(requirement);
+    }
+
+    @Override
+    public String getRequirementCondition(String requirement) {
+        return pyPiMetaDataHelper.getRequirementCondition(requirement);
     }
 
     @Override
     public String getLibraryVersionFromRequirement(String requirement) {
-        String processStr = requirement.trim();
-        int index = processStr.indexOf(STRREQUIREMENT_EQ);
-        if((index > -1) && (processStr.length() > (index + STRREQUIREMENT_EQ.length()))) {
-            return processStr.substring(index + STRREQUIREMENT_EQ.length()).trim();
-        }
-        return null;
+        return pyPiMetaDataHelper.getLibraryVersionFromRequirement(requirement);
     }
 }

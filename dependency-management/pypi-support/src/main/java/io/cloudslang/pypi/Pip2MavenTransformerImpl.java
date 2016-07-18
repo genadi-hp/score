@@ -2,11 +2,12 @@ package io.cloudslang.pypi;
 
 import io.cloudslang.pypi.transformers.PackageTransformer;
 import org.apache.log4j.Logger;
-import org.python.google.common.collect.Sets;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.Set;
 
 /**
  * Created by Genadi Rabinovich, genadi@hpe.com on 14/07/2016.
@@ -36,94 +37,47 @@ public class Pip2MavenTransformerImpl implements Pip2MavenTransformer {
     private static final String TEMPLATE_END_POM = "</project>\n";
 
     @Override
-    public void pip2Maven(String libraryName, String libraryVersion, String pipLibraryFolder, String mavenRepoFolder) {
-        File pipLibraryFolderFile = new File(pipLibraryFolder);
-        File [] libraries = pipLibraryFolderFile.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {return pathname.getAbsolutePath().toLowerCase().endsWith(PackageTransformer.ZIP_EXTENSION);}
-        });
-        File mainLibrary = null;
-        Set<File> dependencies = Sets.newHashSet();
-        for (File library : libraries) {
-            if(library.getName().toLowerCase().startsWith(libraryName.toLowerCase())) {
-                if(!library.getName().toLowerCase().contains(libraryVersion.toLowerCase())) {
-                    throw new RuntimeException("Found wrong version:expected [" + libraryVersion + "] while got [" + library.getAbsolutePath() + "]");
-                }
-                if(mainLibrary != null) {
-                    throw new RuntimeException("Failed to identify main library for [" +
-                            libraryName + "]-[" + libraryVersion + "], got at least two: [" +
-                            mainLibrary.getAbsolutePath() + "] and [" + library.getAbsolutePath() + "]");
-                }
-                mainLibrary = library;
-            } else {
-                dependencies.add(library);
-            }
-        }
-
-        if(mainLibrary == null) {
-            throw new RuntimeException("Failed to identify library for [" + libraryName + "]-[" + libraryVersion + "]");
-        }
-
-        deployLibrary(mavenRepoFolder, libraryName, libraryVersion, mainLibrary, dependencies);
-    }
-
-    @Override
     public String pip2MavenArtifact(String libraryName, String libraryVersion) {
         return PYTHON_GROUP + ":" + libraryName + ":" + libraryVersion + ":" + ZIP_TYPE;
     }
 
-    private void deployLibrary(String mavenRepoFolder,
-                               String libraryName, String libraryVersion, File mainLibrary,
-                               Set<File> dependencies) {
-        String libPomStr = MessageFormat.format(TEMPLATE_START_POM, libraryName, libraryVersion);
+    @Override
+    public void pip2Maven(PypiLibrary pypiLibrary, String mavenRepoFolder) {
+        String libPomStr = MessageFormat.format(TEMPLATE_START_POM, pypiLibrary.getName(), pypiLibrary.getVersion());
         StringBuilder libPom = new StringBuilder(libPomStr);
-        if((dependencies != null) && !dependencies.isEmpty()) {
+        if(!pypiLibrary.getLibraryDependencies().isEmpty()) {
             libPom.append("    <dependencies>\n");
-            for (File dependency : dependencies) {
-                deployDependency(mavenRepoFolder, dependency);
-                String [] av = extractAV(dependency);
-                libPom.append(MessageFormat.format(TEMPLATE_DEPENDENCY, av[0], av[1]));
+            for (PypiLibrary dependency : pypiLibrary.getLibraryDependencies()) {
+                pip2Maven(dependency, mavenRepoFolder);
+                libPom.append(MessageFormat.format(TEMPLATE_DEPENDENCY, dependency.getName(), dependency.getVersion()));
             }
             libPom.append("    </dependencies>\n");
         }
         libPom.append(TEMPLATE_END_POM);
 
-        createArtifact(mavenRepoFolder, mainLibrary, new String[]{libraryName, libraryVersion}, libPom.toString());
+        createArtifact(pypiLibrary, libPom.toString(), mavenRepoFolder);
     }
 
-    private void deployDependency(String mavenRepoFolder, File lib) {
-        String [] libAV = extractAV(lib);
-        String libPomStr = MessageFormat.format(TEMPLATE_START_POM + TEMPLATE_END_POM, libAV[0], libAV[1]);
-
-        createArtifact(mavenRepoFolder, lib, libAV, libPomStr);
-    }
-
-    private void createArtifact(String mavenRepoFolder, File lib, String[] libAV, String libPomStr) {
-        logger.info("Creating artifact for [" + libAV[0] + "]-[" + libAV[1] + "]");
-        String artifactName = libAV[0] + "-" + libAV[1];
+    private void createArtifact(PypiLibrary pypiLibrary, String libPomStr, String mavenRepoFolder) {
+        logger.info("Creating artifact for " + pypiLibrary.getDescription());
+        String artifactName = pypiLibrary.getName() + "-" + pypiLibrary.getVersion();
         File pythonGroupFolder = new File(new File(mavenRepoFolder), PYTHON_GROUP);
         pythonGroupFolder.mkdirs();
-        File artifactFolder = new File(new File(pythonGroupFolder, libAV[0]), libAV[1]);
+        File artifactFolder = new File(new File(pythonGroupFolder, pypiLibrary.getName()), pypiLibrary.getVersion());
         artifactFolder.mkdirs();
 
         File artifactFile = new File(artifactFolder, artifactName + PackageTransformer.ZIP_EXTENSION);
-        logger.info("Moving [" + lib.getAbsolutePath() + "] to [" + artifactFile.getAbsolutePath() + "]");
-        lib.renameTo(artifactFile);
+        logger.info("Moving [" + pypiLibrary.getFile().getAbsolutePath() + "] to [" + artifactFile.getAbsolutePath() + "]");
+        pypiLibrary.getFile().renameTo(artifactFile);
 
         File pomFile = new File(artifactFolder, artifactName + POM_EXTENSION);
 
-        logger.info("Creating pom for [" + libAV[0] + "]-[" + libAV[1] + "] --> [" + pomFile.getAbsolutePath() + "]");
+        logger.info("Creating pom for " + pypiLibrary.getDescription() + " --> [" + pomFile.getAbsolutePath() + "]");
         try (OutputStream os = new FileOutputStream(pomFile)) {
             os.write(libPomStr.getBytes());
             os.flush();
         } catch (IOException e) {
             throw new RuntimeException("Failed to create for [" + artifactName + "] pom file [" + pomFile.getAbsolutePath() + "]", e);
         }
-    }
-
-    String [] extractAV(File lib) {
-        String path = lib.getName();
-        String dependencyStr = path.substring(0, path.length() - PackageTransformer.ZIP_EXTENSION.length());
-        return new String[]{dependencyStr.substring(0, dependencyStr.indexOf('-')).toLowerCase(),
-                dependencyStr.substring(dependencyStr.indexOf('-') + 1).toLowerCase()};
     }
 }
