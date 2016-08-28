@@ -52,6 +52,14 @@ public interface WorkerNodeService {
 
     /**
      *
+     * Deletes a worker record from database
+     *
+     * @param uuid the uuid of the worker to mark deleted
+     */
+    void deleteWorker(String uuid);
+
+    /**
+     *
      * Reads all of the workers that are not marked with the IS_DELETED flag
      *
      * @return a List of {@link io.cloudslang.engine.node.entities.WorkerNode} that are ont marked with

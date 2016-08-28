@@ -82,6 +82,12 @@ public class WorkerNodeServiceImpl implements WorkerNodeService {
 
 	@Override
 	@Transactional
+	public void deleteWorker(String uuid) {
+		workerNodeRepository.deleteByUuid(uuid);
+	}
+
+	@Override
+	@Transactional
 	public void updateWorkerToDeleted(String uuid) {
 		WorkerNode worker = readByUUID(uuid);
 		if(worker != null) {

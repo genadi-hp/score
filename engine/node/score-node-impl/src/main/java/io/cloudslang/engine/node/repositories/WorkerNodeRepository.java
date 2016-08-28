@@ -24,6 +24,10 @@ import java.util.List;
  * Date: 11/11/12
  */
 public interface WorkerNodeRepository extends JpaRepository<WorkerNode,Long> {
+	@Modifying
+	@Query("delete from WorkerNode w where w.uuid = ?1")
+	void deleteByUuid(String uuid);
+
     WorkerNode findByUuidAndDeleted(String uuid, boolean deleted);
 
     WorkerNode findByUuid(String uuid);
